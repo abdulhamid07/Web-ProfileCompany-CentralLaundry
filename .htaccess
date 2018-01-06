@@ -1,0 +1,22 @@
+<IfModule mod_rewrite.c>
+RewriteEngine on
+RewriteRule ^index\.html$ media.php?module=index&id=$1 [L]
+RewriteRule ^contact\.html$ media.php?module=contact&id=$1 [L]
+RewriteRule ^contact-(.*)\.html$ media.php?module=contact-hasil&id=$1 [L]
+RewriteRule ^testimoni\.html$ media.php?module=testimoni&id=$1 [L]
+RewriteRule ^komentar-(.*)\.html$ media.php?module=komentar&id=$1 [L]
+RewriteRule ^about\.html$ media.php?module=about&id=$1 [L]
+RewriteRule ^value-added\.html$ media.php?module=value-added&id=$1 [L]
+RewriteRule ^our-laundry-service\.html$ media.php?module=our-laundry-service&id=$1 [L]
+
+RewriteRule ^serve-(.*)\.html$ media.php?module=our-laundry-service&id=$1 [L]
+
+RewriteRule ^news-(.*)-([0-9])\.html$ media.php?module=index&id=$1&halaman=$2 [L]
+RewriteRule ^news-(.*)\.html$ media.php?module=detail&id=$1 [L]
+RewriteRule ^blog\.html$ media.php?module=blog&id=$1 [L]
+RewriteRule ^blog-(.*)-([0-9])\.html$ media.php?module=blog&id=$1&halaman=$2 [L]
+RewriteRule ^search\.html$ media.php?module=searching&id=$1 [L]
+RewriteRule ^search-(.*)-([0-9])\.html$ media.php?module=searchpage&id=$1&halaman=$2 [L]
+RewriteRule ^category-(.*)\.html$ media.php?module=kategori&id=$1 [L]
+RewriteRule ^kategori-([0-9]+)-(.*)\.html$ media.php?module=kategori&id=$1 [L]
+RewriteRule ^halkategori-([0-9]+)-(.*)\.html$ media.php?module=detailkategori&id=$1&halkategori=$2 [L]

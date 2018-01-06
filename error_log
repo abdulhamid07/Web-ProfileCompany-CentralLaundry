@@ -1,0 +1,1 @@
+[28-Sep-2016 19:05:18 Asia/Jakarta] PHP Deprecated:  mysql_connect(): The mysql extension is deprecated and will be removed in the future: use mysqli or PDO instead in /home/zadamedia/public_html/config/koneksi.php on line 7

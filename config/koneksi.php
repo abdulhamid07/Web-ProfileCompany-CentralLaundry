@@ -1,0 +1,9 @@
+<?php
+	$paging_news=2;
+	$host='localhost';
+	$user='root';
+	$psw='';
+	$db='central_laundry';
+	mysql_connect($host,$user,$psw);
+	mysql_select_db($db);
+?>

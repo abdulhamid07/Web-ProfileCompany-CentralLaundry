@@ -1,0 +1,649 @@
+<?
+header('Content-Type: text/html; charset=utf-8');
+$host = $_SERVER['HTTP_HOST'];
+setlocale(LC_TIME, "id_ID");
+date_default_timezone_set('Asia/Jakarta');
+
+$startdir = '.';
+$showthumbnails = false; 
+$showdirs = true;
+$forcedownloads = false;
+$hide = array(
+				'dlf',
+				'public_html',				
+				'index.php',
+				'Thumbs',
+				'.htaccess',
+				'.htpasswd'
+			);
+$displayindex = false;
+$allowuploads = false;
+$overwrite = false;
+
+$indexfiles = array (
+				'index.html',
+				'index.htm',
+				'default.htm',
+				'default.html'
+			);
+			
+error_reporting(0);
+if(!function_exists('imagecreatetruecolor')) $showthumbnails = false;
+$leadon = $startdir;
+if($leadon=='.') $leadon = '';
+if((substr($leadon, -1, 1)!='/') && $leadon!='') $leadon = $leadon . '/';
+$startdir = $leadon;
+
+if($_GET['dir']) {
+	// check this is okay.
+	
+	if(substr($_GET['dir'], -1, 1)!='/') {
+		$_GET['dir'] = $_GET['dir'] . '/';
+	}
+	
+	$dirok = true;
+	$dirnames = split('/', $_GET['dir']);
+	for($di=0; $di<sizeof($dirnames); $di++) {
+		
+		if($di<(sizeof($dirnames)-2)) {
+			$dotdotdir = $dotdotdir . $dirnames[$di] . '/';
+		}
+		
+		if($dirnames[$di] == '..') {
+			$dirok = false;
+		}
+	}
+	
+	if(substr($_GET['dir'], 0, 1)=='/') {
+		$dirok = false;
+	}
+	
+	if($dirok) {
+		 $leadon = $leadon . $_GET['dir'];
+	}
+}
+
+
+
+$opendir = $leadon;
+if(!$leadon) $opendir = '.';
+if(!file_exists($opendir)) {
+	$opendir = '.';
+	$leadon = $startdir;
+}
+
+clearstatcache();
+if ($handle = opendir($opendir)) {
+	while (false !== ($file = readdir($handle))) { 
+		// first see if this file is required in the listing
+		if ($file == "." || $file == "..")  continue;
+		$discard = false;
+		for($hi=0;$hi<sizeof($hide);$hi++) {
+			if(strpos($file, $hide[$hi])!==false) {
+				$discard = true;
+			}
+		}
+		
+		if($discard) continue;
+		if (@filetype($leadon.$file) == "dir") {
+			if(!$showdirs) continue;
+		
+			$n++;
+			if($_GET['sort']=="date") {
+				$key = @filemtime($leadon.$file) . ".$n";
+			}
+			else {
+				$key = $n;
+			}
+			$dirs[$key] = $file . "/";
+		}
+		else {
+			$n++;
+			if($_GET['sort']=="date") {
+				$key = @filemtime($leadon.$file) . ".$n";
+			}
+			elseif($_GET['sort']=="size") {
+				$key = @filesize($leadon.$file) . ".$n";
+			}
+			else {
+				$key = $n;
+			}
+			$files[$key] = $file;
+			
+			if($displayindex) {
+				if(in_array(strtolower($file), $indexfiles)) {
+					header("Location: $file");
+					die();
+				}
+			}
+		}
+	}
+	closedir($handle); 
+}
+
+// sort our files
+if($_GET['sort']=="date") {
+	@ksort($dirs, SORT_NUMERIC);
+	@ksort($files, SORT_NUMERIC);
+}
+elseif($_GET['sort']=="size") {
+	@natcasesort($dirs); 
+	@ksort($files, SORT_NUMERIC);
+}
+else {
+	@natcasesort($dirs); 
+	@natcasesort($files);
+}
+
+// order correctly
+if($_GET['order']=="desc" && $_GET['sort']!="size") {$dirs = @array_reverse($dirs);}
+if($_GET['order']=="desc") {$files = @array_reverse($files);}
+$dirs = @array_values($dirs); $files = @array_values($files);
+
+?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head> 
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0" />
+<title>Selamat Datang di Niagahoster - Hosting Murah Unlimited Indonesia</title>
+<link href='http://fonts.googleapis.com/css?family=PT+Sans' rel='stylesheet' type='text/css' />
+<style type="text/css"> 
+html
+{
+	width: 100%;
+}
+
+::-moz-selection{background:#03a5f5;color:#ffffff;}
+::selection{background:#03a5f5;color:#ffffff;}
+
+body { 
+   background-color: #f5f6f6; 
+   margin: 0; 
+   padding: 0; 
+}
+
+.ReadMsgBody
+{
+	width: 100%;
+	background-color: #f5f6f6;
+}
+.ExternalClass
+{
+	width: 100%;
+	background-color: #f5f6f6;
+}
+
+a { 
+    color:#03a5f5; 
+	text-decoration:none;
+	
+	font-style: normal;
+} 
+a:hover { 
+    color:#505050; 
+	text-decoration:underline;
+	
+	font-style: normal;
+}
+
+
+
+p, div {
+	margin: 0 !important;
+}
+table {
+	border-collapse: collapse;
+}
+
+@media only screen and (max-width: 640px)  {
+	table table{width:100% !important; }
+	td[class="full_width"] {width:100% !important; }
+	div[class="div_scale"] {width: 440px !important; margin: 0 auto !important;}
+	table[class="table_scale"] {width: 440px !important; margin: 0 auto !important;}
+	table[class="featured_area"] {width: 454px !important; margin: 0 auto !important;}
+	td[class="td_scale"] {width: 440px !important; margin: 0 auto !important;}
+	img[class="img_scale"] {width: 100% !important; height: auto !important;}
+	img[class="divider"] {width: 440px !important; height: 2px !important;}
+	table[class="spacer"] {display: none !important;}
+	td[class="spacer"] {display: none !important;}
+	td[class="center"] {text-align: center !important;}
+	table[class="full"] {width: 400px !important; margin-left: 20px !important; margin-right: 20px !important;}
+	img[class="divider"] {width: 113px !important; height: 8px !important;}
+	
+}
+
+
+@media only screen and (max-width: 479px)  {
+	table table{width:100% !important; }
+	td[class="full_width"] {width:100% !important; }
+	div[class="div_scale"] {width: 280px !important; margin: 0 auto !important;}
+	table[class="table_scale"] {width: 280px !important; margin: 0 auto !important;}
+	table[class="featured_area"] {width: 290px !important; margin: 0 auto !important;}
+	td[class="td_scale"] {width: 280px !important; margin: 0 auto !important;}
+	img[class="img_scale"] {width: 100% !important; height: auto !important;}
+	img[class="divider"] {width: 280px !important; height: 2px !important;}
+	table[class="spacer"] {display: none !important;}
+	td[class="spacer"] {display: none !important;}
+	td[class="center"] {text-align: center !important;}
+	table[class="full"] {width: 240px !important; margin-left: 20px !important; margin-right: 20px !important; }
+	img[class="divider"] {width: 113px !important; height: 8px !important;}
+	
+}
+</style>
+
+
+</head>
+<body bgcolor="#f5f6f6">
+<!-- START OF PRE-HEADER AREA BLOCK-->
+<table width="100%" align="center" bgcolor="#f5f6f6" cellpadding="0" cellspacing="0" border="0">
+	<tr>
+		<td valign="top" width="100%">
+			<table align="center" cellpadding="0" cellspacing="0" border="0">
+				<tr>
+					<td width="100%">
+						
+						<!-- START OF VERTICAL SPACER-->
+						<table bgcolor="#f5f6f6" class="table_scale" width="600" align="center" cellpadding="0" cellspacing="0" border="0">
+							<tr>
+								<td width="100%" height="40">
+									 
+								</td>
+							</tr>
+						</table>
+						<!-- END OF VERTICAL SPACER-->
+						
+						<table class="table_scale" width="600" bgcolor="#f0f0f0" cellpadding="0" cellspacing="0" border="0" style="border-top: 1px solid #f7f7f7;">
+							<tr>
+								<td width="100%">
+									<table width="600" cellpadding="0" cellspacing="0" border="0">
+										<tr>
+											<td class="spacer" width="30">
+											</td>
+											
+											<td width="540">								
+
+											</td>
+											
+											<td class="spacer" width="30">
+											</td>
+										</tr>
+									</table>
+								</td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+<!-- END OF PRE-HEADER AREA BLOCK-->
+
+<!-- START OF HEADER BLOCK-->
+<table width="100%" align="center" bgcolor="#f5f6f6" cellpadding="0" cellspacing="0" border="0">
+	<tr>
+		<td valign="top" width="100%">
+			<table align="center" cellpadding="0" cellspacing="0" border="0">
+				<tr>
+					<td width="100%">
+						<!-- START OF VERTICAL SPACER-->
+						<table bgcolor="#ffffff" class="table_scale" width="600" align="center" cellpadding="0" cellspacing="0" border="0">
+							<tr>
+								<td width="100%" height="20">
+									 
+								</td>
+							</tr>
+						</table>
+						<!-- END OF VERTICAL SPACER-->
+						
+						<table class="table_scale" width="600" bgcolor="#ffffff" cellpadding="0" cellspacing="0" border="0">
+							<tr>
+								<td width="100%">
+									<table width="600" cellpadding="0" cellspacing="0" border="0">
+										<tr>
+											<td class="spacer" width="30">
+											</td>
+											
+											<td width="540">
+												
+												<!-- START OF LOGO-->
+												<table class="full" align="left" width="540" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt;">
+													<tr>
+															<td class="center" style="padding: 0px;font-family: 'PT Sans', Helvetica, Arial, sans-serif; color:#444444; font-size:18px; line-height:100%;" align="center">
+															<a href="http://www.niagahoster.co.id" target="_blank" style="color: rgb(33, 197, 245);">
+																<img src="http://www.niagahoster.co.id/bb-themes/spletnik/assets/images/logo2.png" class="img_scale" alt="hosting murah niagahoster" style="display: inline-block;" border="0">
+															</a>
+														</td>
+													</tr>
+												</table>
+												<!-- END OF LOGO-->
+												
+											</td>
+											
+											<td class="spacer" width="30">
+											</td>
+										</tr>
+									</table>
+								</td>
+							</tr>
+						</table>
+						
+					</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+<!-- END OF HEADER BLOCK-->
+
+<!-- START OF FEATURED AREA BLOCK-->
+<table width="100%" align="center" bgcolor="#f5f6f6" cellpadding="0" cellspacing="0" border="0">
+	<tr>
+		<td valign="top" width="100%">
+			<table align="center" cellpadding="0" cellspacing="0" border="0">
+				<tr>
+					<td width="100%">
+						<table class="featured_area" align="center" width="620" cellpadding="0" cellspacing="0" border="0">
+							<tr>
+								<td align="center" style="margin: 0; font-size:14px ; color:#677b82; font-family: 'PT Sans', Helvetica, Arial, sans-serif; line-height: 0;">
+									<span>
+									<img class="img_scale" src="http://www.niagahoster.co.id/welcome/images/top-teaser.png" alt="top teaser" width="620" height="25" border="0" style="display: block;" />
+									</span>
+								</td>
+							</tr>
+						</table>
+						
+						<table class="featured_area" align="center" width="620" bgcolor="#03a5f5" cellpadding="0" cellspacing="0" border="0">
+							<tr>
+								<td width="100%">
+									<table width="620" cellpadding="0" cellspacing="0" border="0">
+										<tr>
+											<td class="spacer" width="30">
+											</td>
+											
+											<td width="540">
+												<!-- START OF LEFT COLUMN-->
+												<table class="full" align="left" width="350" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt;">
+													<!-- START OF HEADING-->
+													<tr>
+													<td width="100%" height="20">
+														&nbsp;
+													</td>
+													</tr>
+													<tr>
+														<td class="center" align="left" style="padding: 3px; font-family: 'PT Sans', Helvetica, Arial, sans-serif; color:#ffffff; font-size:24px; line-height:34px; mso-line-height-rule: exactly;">
+															<span>
+															Selamat Datang! </br>Akun Hosting Anda Telah Dibuat
+															</span>
+														</td>
+													</tr>
+													<!-- END OF HEADING-->
+												</table>
+												<!-- END OF LEFT COLUMN-->
+																	
+												<!-- START OF RIGHT COLUMN-->
+												<table class="full" align="right" width="160" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt;">
+
+
+												<tr>
+														<td class="center" align="left" style="margin: 0; font-size:13px ; color:#677b82; font-family: 'PT Sans', Helvetica, Arial, sans-serif; line-height: 23px;">
+															<span>
+															<a style="color:#03a5f5;">
+															<img src="http://www.niagahoster.co.id/welcome/images/welcome-niagahoster.png" alt="featured-image" width="116" height="120" border="0" style="display: inline-block;" />
+															</a>
+															</span>
+														</td>
+													</tr>
+												</table>
+												<!-- END OF RIGHT COLUMN-->
+											</td>
+											
+											<td class="spacer" width="30">
+											</td>
+										</tr>
+									</table>
+								</td>
+							</tr>
+						</table>
+						
+						
+						<table class="featured_area" align="center" width="620" cellpadding="0" cellspacing="0" border="0">
+							<tr>
+								<td align="center" style="margin: 0; font-size:14px ; color:#677b82; font-family: 'PT Sans', Helvetica, Arial, sans-serif; line-height: 0;">
+									<span>
+									<img class="img_scale" src="http://www.niagahoster.co.id/welcome/images/bottom-teaser.png" alt="bottom teaser" width="620" height="25" border="0" style="display: block;" />
+									</span>
+								</td>
+							</tr>
+						</table>
+						
+					</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+<!-- END OF FEATURED AREA BLOCK-->
+
+<!-- START OF 1/1 (FULL WIDTH) COLUMN BLOCK-->
+<table width="100%" align="center" bgcolor="#f5f6f6" cellpadding="0" cellspacing="0" border="0">
+	<tr>
+		<td valign="top" width="100%">
+			<table align="center" cellpadding="0" cellspacing="0" border="0">
+				<tr>
+					<td width="100%">
+						<table class="table_scale" width="600" bgcolor="#ffffff" cellpadding="0" cellspacing="0" border="0">
+							<tr>
+								<td width="100%">
+									<table width="600" cellpadding="0" cellspacing="0" border="0">
+										<tr>
+											<td class="spacer" width="30">
+											</td>
+											
+											<td width="540">
+												<table class="full" align="left" width="540" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt;">
+	
+													<!-- START OF TEXT-->
+													<tr>
+														<td class="center" align="left" style="padding-top: 10px; margin: 0;  font-size:13px ; color:#677b82; font-family: 'PT Sans', Helvetica, Arial, sans-serif; line-height: 23px;mso-line-height-rule: exactly;">
+															<span>
+															Akun <b><? print $host; ?></b> telah berhasil diinstal di server kami! Silahkan hapus <b>index.html</b> dari folder <b>public_html</b> dan upload file website Anda dengan menggunakan FTP atau File Manager yang tersedia di cPanel Anda.
+															</span>
+														</td>
+													</tr>
+													<!-- END OF TEXT-->
+													
+													<!-- START OF HEADING-->
+													<tr>
+														<td class="center" align="left" style="padding-bottom: 20px; border-bottom: 1px solid #f5f6f6; font-family: 'PT Sans', Helvetica, Arial, sans-serif; color:#505050; font-size:24px; line-height:34px; mso-line-height-rule: exactly;">
+														</td>
+													</tr>
+													<!-- END OF HEADING-->
+												</table>
+											</td>
+											
+											<td class="spacer" width="30">
+											</td>
+										</tr>
+									</table>
+								</td>
+							</tr>
+						</table>
+						
+					</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+<!-- END OF 1/1 (FULL WIDTH) COLUMN BLOCK-->
+
+<!-- START OF SUB-FOOTER BLOCK-->
+<table width="100%" align="center" bgcolor="#f5f6f6" cellpadding="0" cellspacing="0" border="0">
+	<tr>
+		<td valign="top" width="100%">
+			<table align="center" cellpadding="0" cellspacing="0" border="0">
+				<tr>
+					<td width="100%">
+						
+						<table class="table_scale" width="600" bgcolor="#ffffff" cellpadding="0" cellspacing="0" border="0" style="">
+							<tr>
+								<td width="100%">
+									<table width="600" cellpadding="0" cellspacing="0" border="0">
+										<tr>
+											<td class="spacer" width="30">
+											</td>
+											
+											<td width="540">
+												
+												<!-- START OF SPACER-->
+												<table width="20" align="left" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt;">
+													<tr>
+														<td width="100%" height="20"></td>
+													</tr>
+												</table>
+												<!-- END OF SPACER-->
+												
+												<!-- START OF RIGHT COLUMN-->
+												<table class="full" align="right" width="255" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt;">
+													<tr>
+														<td class="center" align="right" style="margin: 0; padding-top: 0px;padding-bottom: 30px;font-size:11px ; color:#787878; font-family: 'PT Sans', Helvetica, Arial, sans-serif; line-height: 100%;">
+															<span>
+															<a href="https://www.facebook.com/niagahoster" style="color:#ededed;">
+																<img src="http://www.niagahoster.co.id/welcome/images/facebook.png" alt="facebook" width="32" height="32" border="0" style="display: inline-block;" />
+															</a>
+															   
+															<a href="http://www.twitter.com/niagahoster" style="color:#ededed;">
+																<img src="http://www.niagahoster.co.id/welcome/images/twitter.png" alt="twitter" width="32" height="32" border="0" style="display: inline-block;" />
+															</a>
+															   
+															<a href="https://plus.google.com/+Niagahoster" style="color:#ededed;">
+																<img src="http://www.niagahoster.co.id/welcome/images/google.png" alt="gplus" width="32" height="32" border="0" style="display: inline-block;" />
+															</a>
+															</span>
+														</td>
+													</tr>
+												</table>
+												<!-- END OF RIGHT COLUMN-->
+											</td>
+											
+											<td class="spacer" width="30">
+											</td>
+										</tr>
+									</table>
+								</td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+<!-- END OF SUB-FOOTER BLOCK-->
+
+<!-- START OF BOTTOM TEASER BLOCK-->
+<table width="100%" align="center" bgcolor="#f5f6f6" cellpadding="0" cellspacing="0" border="0">
+	<tr>
+		<td align="center" valign="top" width="100%">
+			<table align="center" cellpadding="0" cellspacing="0" border="0">
+				<tr>
+					<td width="100%">
+						<table class="table_scale" width="600" bgcolor="#f5f6f6" cellpadding="0" cellspacing="0" border="0">
+							<tr>
+								<td width="100%">
+									<table width="600" cellpadding="0" cellspacing="0" border="0">
+										<tr>
+											<td width="540">
+												<table align="left" width="540" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt;">
+													<tr>
+														<td align="center" valign="top" style="padding: 0px;">
+															<table border="0" align="center" cellpadding="0" cellspacing="0" bgcolor="#03a5f5" style="margin: 0;">
+																<tr>
+																	<td align="center" valign="middle" bgcolor="#f5f6f6" style="padding: 0px; font-size:13px ; font-style:normal; color:#677b82; font-family: 'PT Sans', Helvetica, Arial, sans-serif; line-height: 0;">
+																		<img class="img_scale" src="http://www.niagahoster.co.id/welcome/images/footer-teaser.png" width="600" height="10" alt="img 600 290" border="0" style="display: block;" />
+																	</td>
+																</tr>
+															</table>
+														</td>
+													</tr>
+												</table>
+											</td>
+										</tr>
+									</table>
+								</td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+<!-- END OF BOTTOM TEASER BLOCK-->
+
+<!-- START OF FOOTER BLOCK-->
+<table width="100%" align="center" bgcolor="#f5f6f6" cellpadding="0" cellspacing="0" border="0">
+	<tr>
+		<td valign="top" width="100%">
+			<table align="center" cellpadding="0" cellspacing="0" border="0">
+				<tr>
+					<td width="100%">
+						<table class="table_scale" width="600" bgcolor="#f5f6f6" cellpadding="0" cellspacing="0" border="0">
+							<tr>
+								<td width="100%">
+									<table width="600" cellpadding="0" cellspacing="0" border="0">
+										<tr>
+											<td width="600">
+												<table class="full" align="center" width="540" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt;">
+													<tr>
+														<td class="center" align="center" style="margin: 0; padding: 30px 0px;  font-size:13px ; color:#677b82; font-family: 'PT Sans', Helvetica, Arial, sans-serif; line-height: 23px;">
+															<span style="color:#21c5f5;">
+															<a href="http://www.niagahoster.co.id" style="border-bottom: 1px dotted #21c5f5;  font-style: normal; text-decoration: none; color:#21c5f5;" target="_blank">
+															Hosting Murah
+															</a>
+															&nbsp;&nbsp;|&nbsp;&nbsp;
+															<a href="http://www.niagahoster.co.id/domain-murah" style="border-bottom: 1px dotted #21c5f5;  font-style: normal; text-decoration: none; color:#21c5f5;" target="_blank">
+															Domain Murah
+															</a>
+															&nbsp;&nbsp;|&nbsp;&nbsp;
+			<a href="http://livechat.niagahoster.co.id/index.php?/Knowledgebase/List" style="border-bottom: 1px dotted #21c5f5;  font-style: normal; text-decoration: none; color:#21c5f5;" target="_blank">
+															Pengetahuan Dasar
+&nbsp;&nbsp;|&nbsp;&nbsp;
+
+															</a>
+															<a href="http://livechat.niagahoster.co.id/visitor/index.php?/LiveChat/Chat/Request/" style="border-bottom: 1px dotted #21c5f5;  font-style: normal; text-decoration: none; color:#21c5f5;" target="_blank">
+															Live Support
+
+															</a>
+															&nbsp;&nbsp;|&nbsp;&nbsp;
+															<a href="http://www.niagahoster.co.id/login" style="border-bottom: 1px dotted #21c5f5;  font-style: normal; text-decoration: none; color:#21c5f5;" target="_blank">
+															Member Area
+															</a>
+															</span>
+															<span>
+															<br />
+															Niagahoster &copy; <? print date('Y'); ?>. Hak cipta dilindungi.
+															</span>
+														</td>
+													</tr>
+												</table>
+											</td>
+										</tr>
+									</table>
+								</td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+<!-- END OF FOOTER BLOCK-->
+</body>
+</html>
+<!--DEFAULT_WELCOME_PAGE-->
+
+
